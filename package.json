@@ -1,0 +1,44 @@
+{
+  "name": "ops-dashboard",
+  "version": "1.0.0",
+  "description": "Internal Ops Dashboard pulling GitHub activity with idempotent PostgreSQL ingestion, scheduled sync, and Chart.js visualizations.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node src/db/migrate.js",
+    "seed": "node src/db/seed.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --forceExit"
+  },
+  "keywords": [
+    "ops-dashboard",
+    "github-api",
+    "postgresql",
+    "chartjs",
+    "express",
+    "node-cron"
+  ],
+  "author": "Hari Patel",
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "^20.1.1",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nock": "^13.5.4",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "transform": {},
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}

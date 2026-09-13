@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — GitHub Integrations Monitor</title>
+  <meta name="description" content="Internal operations dashboard monitoring pull request, commit, and issue velocity across open-source repositories with idempotent PostgreSQL ingestion.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="header-bar">
+      <div class="brand-section">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Internal Ops Dashboard</h1>
+          <div class="brand-subtitle">
+            <span>Scheduled multi-repo integration telemetry</span>
+          </div>
+          <div class="repo-tags">
+            <% repos.forEach(function(repo) { %>
+              <span class="repo-tag"><%= repo %></span>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-indicator">
+          <div class="status-dot" id="liveStatusDot"></div>
+          <span id="lastSyncedText" data-last-synced="<%= lastSync ? lastSync.started_at : '' %>">
+            <% if (lastSync && lastSync.started_at) { %>
+              Synced <%= new Date(lastSync.started_at).toLocaleTimeString() %>
+            <% } else { %>
+              Not synced yet
+            <% } %>
+          </span>
+        </div>
+
+        <button id="syncNowBtn" class="btn-sync" type="button" aria-label="Trigger manual sync">
+          <svg id="syncIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          <span id="syncBtnText">Sync Now</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- KPI Stat Tiles -->
+    <section class="stats-grid" aria-label="Key Performance Indicators">
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-label">PRs Merged (7d)</span>
+          <span class="stat-value" id="statPrsMerged"><%= stats.prs_merged_7d || 0 %></span>
+          <span class="stat-meta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Shipped to main branch
+          </span>
+        </div>
+        <div class="stat-icon-wrapper">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="18" r="3"></circle>
+            <circle cx="6" cy="6" r="3"></circle>
+            <path d="M6 9v12"></path>
+            <path d="M18 15V9a9 9 0 0 0-9-9"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-label">Total Commits (7d)</span>
+          <span class="stat-value" id="statCommits"><%= stats.commits_7d || 0 %></span>
+          <span class="stat-meta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            </svg>
+            Active code velocity
+          </span>
+        </div>
+        <div class="stat-icon-wrapper">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"></circle>
+            <line x1="1.05" y1="12" x2="7" y2="12"></line>
+            <line x1="17.01" y1="12" x2="22.96" y2="12"></line>
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <span class="stat-label">Open Issues Tracked</span>
+          <span class="stat-value" id="statOpenIssues"><%= stats.open_issues_recent || 0 %></span>
+          <span class="stat-meta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Current triage queue
+          </span>
+        </div>
+        <div class="stat-icon-wrapper">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visualizations Grid -->
+    <section class="charts-grid" aria-label="Activity Visualizations">
+      <!-- Chart 1: PR Velocity Trends (Opened vs Merged) -->
+      <div class="chart-card col-8">
+        <div class="chart-header">
+          <div>
+            <h2 class="chart-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 20V10"></path>
+                <path d="M12 20V4"></path>
+                <path d="M6 20v-6"></path>
+              </svg>
+              PR Activity Trends (14 Days)
+            </h2>
+            <p class="chart-subtitle">Daily distribution of opened pull requests vs. merged pull requests</p>
+          </div>
+        </div>
+        <div class="chart-body">
+          <canvas id="prTrendsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Top Contributors Bar Chart -->
+      <div class="chart-card col-4">
+        <div class="chart-header">
+          <div>
+            <h2 class="chart-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Top Contributors (7 Days)
+            </h2>
+            <p class="chart-subtitle">Top 10 active contributors ranked by merged PRs, commits, & issues</p>
+          </div>
+        </div>
+        <div class="chart-body">
+          <canvas id="contributorsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 3: Activity by Repository Stacked Bar Chart -->
+      <div class="chart-card col-12">
+        <div class="chart-header">
+          <div>
+            <h2 class="chart-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+              Repository Activity Composition (14 Days)
+            </h2>
+            <p class="chart-subtitle">Cross-repository breakdown across Pull Requests, Commits, and Issues</p>
+          </div>
+        </div>
+        <div class="chart-body">
+          <canvas id="repoActivityChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Activity Feed -->
+    <section class="activity-card" aria-label="Recent Activity Stream">
+      <div class="activity-header">
+        <h2 class="chart-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          Live Activity Feed (Last 15 Events)
+        </h2>
+        <span class="brand-subtitle">Idempotently persisted with UNIQUE constraint</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Details</th>
+              <th>Actor</th>
+              <th>Repository</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="activityTableBody">
+            <% if (recentEvents && recentEvents.length > 0) { %>
+              <% recentEvents.forEach(function(event) { %>
+                <tr>
+                  <td>
+                    <span class="badge">
+                      <%= event.event_type.replace('_', ' ') %>
+                    </span>
+                  </td>
+                  <td>
+                    <% if (event.payload && event.payload.html_url) { %>
+                      <a href="<%= event.payload.html_url %>" target="_blank" rel="noopener noreferrer" class="event-link">
+                        <%= event.payload.title || event.payload.message || ('#' + (event.payload.number || event.source_id)) %>
+                      </a>
+                    <% } else { %>
+                      <span><%= event.payload?.title || event.payload?.message || event.source_id %></span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <span class="actor-pill">@<%= event.actor || 'system' %></span>
+                  </td>
+                  <td>
+                    <span class="target-pill"><%= event.target %></span>
+                  </td>
+                  <td>
+                    <span class="time-pill" title="<%= new Date(event.occurred_at).toISOString() %>">
+                      <%= new Date(event.occurred_at).toLocaleString() %>
+                    </span>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="empty-state">
+                  No events ingested yet. Click "Sync Now" to trigger the first integration pull!
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="/dashboard.js"></script>
+</body>
+</html>

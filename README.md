@@ -1,5 +1,7 @@
 # Internal Ops Dashboard
 
+> **Live Dashboard:** [https://ops-dashboard-iglb.onrender.com/dashboard](https://ops-dashboard-iglb.onrender.com/dashboard)
+
 An automated operations monitoring platform that tracks Pull Request, Commit, and Issue activity across open-source GitHub repositories. Built with Node.js, Express, and PostgreSQL, the service polls the GitHub REST API on an hourly schedule, persists events idempotently into PostgreSQL, and serves a clean, high-contrast operational dashboard with Chart.js visualizations.
 
 ---
@@ -186,7 +188,7 @@ npm test
    - `REPOS`: `facebook/react,vercel/next.js,nodejs/node,vitejs/vite,sveltejs/svelte`
    - `NODE_ENV`: `production`
 7. Click **Deploy Web Service**.
-8. Navigate to your live URL: `https://<your-app>.onrender.com/dashboard`.
+8. Navigate to your live URL: [https://ops-dashboard-iglb.onrender.com/dashboard](https://ops-dashboard-iglb.onrender.com/dashboard).
 
 ---
 

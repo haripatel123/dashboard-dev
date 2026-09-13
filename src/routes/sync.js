@@ -1,14 +1,27 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { runSync, isSyncInProgress } from '../sync/worker.js';
 import { getLastSyncRun } from '../db/repos/syncRuns.js';
 
 const router = express.Router();
 
+// Rate limit: 5 requests per minute per IP
+const syncLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many sync requests. Please wait a moment before trying again.'
+  }
+});
+
 /**
- * POST /api/sync or POST /sync
- * Triggers a manual sync across all configured repositories.
+ * POST /sync
+ * Triggers a manual sync across all configured repositories with rate limiting.
  */
-router.post(['/', '/sync'], async (req, res, next) => {
+router.post('/', syncLimiter, async (req, res, next) => {
   try {
     if (isSyncInProgress()) {
       return res.status(409).json({
@@ -37,7 +50,7 @@ router.post(['/', '/sync'], async (req, res, next) => {
 });
 
 /**
- * GET /api/sync/status
+ * GET /sync/status
  * Returns the status of the most recent sync run.
  */
 router.get('/status', async (req, res, next) => {

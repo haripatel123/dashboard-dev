@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
+import request from 'supertest';
 import { MockDatabase } from './helpers/mockDb.js';
 import { insertEvent, insertEvents, getRecentEvents } from '../src/db/repos/events.js';
 import { startSyncRun, completeSyncRun, failSyncRun, getLastSyncRun } from '../src/db/repos/syncRuns.js';
+import { app } from '../src/server.js';
 
 describe('Sync & Idempotency Pipeline', () => {
   let db;
@@ -105,5 +107,18 @@ describe('Sync & Idempotency Pipeline', () => {
     const lastRun = await getLastSyncRun('github', db);
     expect(lastRun.status).toBe('failed');
     expect(lastRun.error_message).toContain('GitHub API 500');
+  });
+
+  it('should enforce rate limiting on POST /sync after exceeding limit', async () => {
+    // Send 5 rapid sync requests
+    for (let i = 0; i < 5; i++) {
+      await request(app).post('/sync');
+    }
+
+    // 6th request within window must be rejected by express-rate-limit with HTTP 429
+    const limitedRes = await request(app).post('/sync');
+    expect(limitedRes.status).toBe(429);
+    expect(limitedRes.body).toHaveProperty('error');
+    expect(limitedRes.body.error).toContain('Too many sync requests');
   });
 });

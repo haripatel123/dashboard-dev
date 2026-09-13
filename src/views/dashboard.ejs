@@ -100,15 +100,15 @@
 
       <div class="stat-card">
         <div class="stat-info">
-          <span class="stat-label">Open Issues Tracked</span>
-          <span class="stat-value" id="statOpenIssues"><%= stats.open_issues_recent || 0 %></span>
+          <span class="stat-label">Open Issues (Now)</span>
+          <span class="stat-value" id="statOpenIssues"><%= stats.open_issues_now !== undefined ? stats.open_issues_now : (stats.open_issues_recent || 0) %></span>
           <span class="stat-meta">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            Current triage queue
+            Active open backlog
           </span>
         </div>
         <div class="stat-icon-wrapper">

@@ -68,12 +68,22 @@ export async function getStatTiles(db = pool) {
     SELECT
       COUNT(*) FILTER (WHERE event_type = 'pr_merged' AND occurred_at > NOW() - INTERVAL '7 days')::int AS prs_merged_7d,
       COUNT(*) FILTER (WHERE event_type = 'commit' AND occurred_at > NOW() - INTERVAL '7 days')::int AS commits_7d,
-      COUNT(*) FILTER (WHERE event_type = 'issue_opened' AND occurred_at > NOW() - INTERVAL '14 days')::int AS open_issues_recent
+      (
+        COUNT(*) FILTER (
+          WHERE event_type = 'issue_opened'
+            AND NOT EXISTS (
+              SELECT 1 FROM events closed
+              WHERE closed.source = events.source
+                AND closed.event_type = 'issue_closed'
+                AND closed.source_id = replace(events.source_id, '_opened', '_closed')
+            )
+        )
+      )::int AS open_issues_now
     FROM events
     WHERE source = 'github';
   `;
   const res = await db.query(sql);
-  return res.rows[0] || { prs_merged_7d: 0, commits_7d: 0, open_issues_recent: 0 };
+  return res.rows[0] || { prs_merged_7d: 0, commits_7d: 0, open_issues_now: 0 };
 }
 
 /**

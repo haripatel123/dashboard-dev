@@ -114,7 +114,7 @@ export class MockDatabase {
       const openIssues = this.events.filter(e =>
         e.source === 'github' &&
         e.event_type === 'issue_opened' &&
-        (now - e.occurred_at.getTime()) < d14
+        !this.events.some(closed => closed.source === 'github' && closed.event_type === 'issue_closed' && closed.source_id === e.source_id.replace('_opened', '_closed'))
       ).length;
 
       return {
@@ -122,7 +122,7 @@ export class MockDatabase {
         rows: [{
           prs_merged_7d: prsMerged,
           commits_7d: commits,
-          open_issues_recent: openIssues
+          open_issues_now: openIssues
         }]
       };
     }

@@ -28,7 +28,6 @@ app.set('views', path.join(__dirname, 'views'));
 app.use('/dashboard', dashboardRouter);
 app.get('/', (req, res) => res.redirect('/dashboard'));
 app.use('/api/metrics', metricsRouter);
-app.use('/api/sync', syncRouter);
 app.use('/sync', syncRouter);
 
 // Health check endpoint

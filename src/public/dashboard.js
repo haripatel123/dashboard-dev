@@ -289,7 +289,7 @@ function initSyncButton() {
     syncIcon.innerHTML = '<span class="sync-spinner"></span>';
 
     try {
-      const res = await fetch('/api/sync', {
+      const res = await fetch('/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -328,7 +328,7 @@ async function refreshDashboardData() {
       const issEl = document.getElementById('statOpenIssues');
       if (prEl) prEl.textContent = s.prs_merged_7d || 0;
       if (comEl) comEl.textContent = s.commits_7d || 0;
-      if (issEl) issEl.textContent = s.open_issues_recent || 0;
+      if (issEl) issEl.textContent = s.open_issues_now !== undefined ? s.open_issues_now : (s.open_issues_recent || 0);
     }
 
     await initCharts();

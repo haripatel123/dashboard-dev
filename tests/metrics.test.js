@@ -74,7 +74,7 @@ describe('Metrics Aggregations & API Endpoints', () => {
     expect(stats).toEqual({
       prs_merged_7d: 1,
       commits_7d: 2,
-      open_issues_recent: 1
+      open_issues_now: 1
     });
   });
 
